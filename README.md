@@ -1,9 +1,11 @@
 Hexi PID control examples
 =========================
 For use in 261215 Embedded Systems Laboratory.
-Dept. Computer Engineering, Chiang Mai University
-Examples created using Hexi
 
+Dept. Computer Engineering, Chiang Mai University.
+
+Examples created using Hexi
+* All examples are in the /control_ex folder
 
 
 ![Hexi](/tutorials/screenshots/logoAndIllustration.png)
