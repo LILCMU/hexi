@@ -1,3 +1,11 @@
+Hexi PID control examples
+=========================
+For use in 261215 Embedded Systems Laboratory.
+Dept. Computer Engineering, Chiang Mai University
+Examples created using Hexi
+
+
+
 ![Hexi](/tutorials/screenshots/logoAndIllustration.png)
 
 Hexi
