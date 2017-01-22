@@ -20,8 +20,12 @@ g.scaleToWindow();
 var ship = undefined;
 var blocks = undefined;
 var graph = undefined;
+var targetAltitudeGraph = undefined;
+var speedGraph = undefined;
+var targetAltitude = undefined;
 var prevX = undefined;
 var prevY = undefined;
+var prevVy = undefined;
 var message = undefined;
 
 let pauseDone = false;
@@ -34,91 +38,17 @@ g.start();
 function setup() {
 
 
-  // block = g.sprite(["images/tile.png"]);
-  // block.x = 0;
-  // block.y = 0;
-
-  //Make a ship sprite.
-  //circle arguments: diameter, fillStyle, strokeStyle, lineWidth, x, y
-  //ship = g.circle(18, "powderBlue", "black", 2, 192, 256);
-  ship = g.sprite(["images/lander.png"]);
-
-  ship.x = 0;
-
-  //Set the ship's velocity to 0
-  //ship.vx = g.randomInt(5, 15);
-  ship.vx = VX;
-  ship.vy = 0;
-  //ship.vy = g.randomInt(5, 15);
-
-  //Physics properties
-  ship.gravity = GRAVITY;
-
-
-  // used to track the lines segments
-  prevX = ship.x+ship.halfWidth;
-  prevY = ship.y+ship.halfHeight;
-
-
-  //Add the winning text
-  message = g.text("Mission Complete", "48px Futura", "white", (g.canvas.width/2)-200, 100);
-  message.visible = false;
-
-
-  //When the pointer is tapped, center the ship
-  //over the pointer and give it a new random velocity
-  g.pointer.tap = function () {
-
-    ship.vy = ship.vy - 0.75 ; 
-
-    // check reset conditions
-    if (!ship.visible || message.visible) {
-      if (pauseDone) {
-        reset();
-        pauseDone = false;
-      }      
-    } else {
-      // play rocket gas animation
-      return particleStream.play();
-    }
-
-  };
-
-  //Stop creating particles when the pointer is released
-  g.pointer.release = function () {
-    return particleStream.stop();
-  };
-
-  //Change the game state to `play`.
-  g.state = play;
-
-// ==============================
-
-  var particleStream = g.particleEmitter(20, //The interval, in milliseconds
-  function () {
-    return g.createParticles( //The `createParticles` method
-    //ship.x+(ship.width/2), ship.y+ship.height, 
-    (ship.width/2), ship.height,
-    function () {
-      return g.sprite("images/star.png");
-    }, 
-    ship,       //The container to add the particles to
-    40,               //Number of particles
-    0.1,              //Gravity
-    true,             //Random spacing
-    1,2);             //Min/max angle
-  });
-
-
-
-
-
 
   // ======================================
   // initialize the line graph
-  graph = g.line();
- 
-  graph.lineStyle(1.5, 0xffffff, 1); 
+  	graph = g.line();
+  	graph.lineStyle(1.5, 0xffffff, 1); 
+
+  	targetAltitudeGraph = g.line();
+ 	targetAltitudeGraph.lineStyle(1, 0xffff00, 1);
+
+ 	speedGraph = g.line();
+ 	speedGraph.lineStyle(2, 0xdb7b1c, 1);
 
   // =========================================
     // create the tiles 
@@ -139,6 +69,94 @@ function setup() {
 
       tileHeight+=64;
     } 
+
+    targetAltitude = holePos+32;
+    targetAltitudeGraph.drawPolygon(0, targetAltitude, g.canvas.width, targetAltitude);
+
+
+  //Make a ship sprite.
+  //circle arguments: diameter, fillStyle, strokeStyle, lineWidth, x, y
+  //ship = g.circle(18, "powderBlue", "black", 2, 192, 256);
+  ship = g.sprite(["images/lander.png"]);
+
+  ship.x = 0;
+
+  //Set the ship's velocity to 0
+  //ship.vx = g.randomInt(5, 15);
+  ship.vx = VX;
+  ship.vy = 0;
+  prevVy = 0;
+  //ship.vy = g.randomInt(5, 15);
+
+  //Physics properties
+  ship.gravity = GRAVITY;
+
+
+  // used to track the lines segments
+  prevX = ship.x+ship.halfWidth;
+  prevY = ship.y+ship.halfHeight;
+
+
+  //Add the winning text
+  message = g.text("Mission Complete", "48px Futura", "white", (g.canvas.width/2)-200, 100);
+  message.visible = false;
+
+
+
+
+  //When the pointer is tapped, center the ship
+  //over the pointer and give it a new random velocity
+  g.pointer.tap = function () {
+
+  
+    // check reset conditions
+    if (!ship.visible || message.visible) {
+      if (pauseDone) {
+        reset();
+        pauseDone = false;
+      }      
+    } else {
+    }
+
+  };
+
+  g.pointer.press = function () {
+      // play rocket gas animation
+      return particleStream.play();
+
+  }
+
+  //Stop creating particles when the pointer is released
+  g.pointer.release = function () {
+    return particleStream.stop();
+  };
+
+  //Change the game state to `play`.
+  g.state = play;
+
+// ==============================
+
+  var particleStream = g.particleEmitter(100, //The interval, in milliseconds
+  function () {
+    return g.createParticles( //The `createParticles` method
+    //ship.x+(ship.width/2), ship.y+ship.height, 
+    (ship.width/2), ship.height,
+    function () {
+      return g.sprite("images/star.png");
+    }, 
+    ship,       //The container to add the particles to
+    40,               //Number of particles
+    0.1,              //Gravity
+    true,             //Random spacing
+    1,2);             //Min/max angle
+  });
+
+
+
+
+
+
+
   
 
 
@@ -184,8 +202,15 @@ function play() {
 
 
   if (!ship.visible) { return}
+
+
+  if (g.pointer.isDown) {
+  	  ship.vy = ship.vy - 0.1 ; 
+  }
+
   //Apply gravity to the vertical velocity
   ship.vy += ship.gravity;
+
 
   ship.x += ship.vx;
   ship.y += ship.vy;
@@ -197,6 +222,15 @@ function play() {
 
     prevX = ship.x+ship.halfWidth;
     prevY = ship.y+ship.halfHeight;
+
+  }
+
+  var factor = 20;
+
+  // Draw the velocity trailing line
+  if (prevVy != ship.vy)  {
+    speedGraph.drawPolygon(prevX, targetAltitude+(prevVy*factor), ship.x+ship.halfWidth, targetAltitude+(ship.vy*factor));
+    prevVy = ship.vy;
 
   }
 
@@ -303,14 +337,19 @@ function reset() {
   ship.vy = 0;
   ship.x = 0;
   ship.vx = VX;
+
   ship.gravity = GRAVITY;
   prevX = ship.x;
   prevY = ship.y;
+  prevVy = 0;
 
   g.remove(graph);
-
   graph = g.line();
   graph.lineStyle(1.5, 0xffffff, 1); 
+
+  g.remove(speedGraph);
+  speedGraph = g.line();
+  speedGraph.lineStyle(2, 0xdb7b1c, 1);
 
   message.visible = false;
 
