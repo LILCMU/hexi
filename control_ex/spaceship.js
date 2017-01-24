@@ -27,6 +27,7 @@ var prevX = undefined;
 var prevY = undefined;
 var prevVy = undefined;
 var message = undefined;
+var particleStream = undefined;
 
 let pauseDone = false;
 
@@ -136,7 +137,7 @@ function setup() {
 
 // ==============================
 
-  var particleStream = g.particleEmitter(100, //The interval, in milliseconds
+  particleStream = g.particleEmitter(100, //The interval, in milliseconds
   function () {
     return g.createParticles( //The `createParticles` method
     //ship.x+(ship.width/2), ship.y+ship.height, 
@@ -196,6 +197,8 @@ function shipExplode() {
 }
 
 
+let go = true;
+
 //The `play` function will run in a loop
 function play() {
 
@@ -204,9 +207,42 @@ function play() {
   if (!ship.visible) { return}
 
 
+
   if (g.pointer.isDown) {
   	  ship.vy = ship.vy - 0.1 ; 
   }
+
+
+  /////////////////////////////////////////////////////
+  // Auto pilot 
+  /////////////////////////////////////////////////////
+  var kv = 25;
+  var ks = 1;
+
+  var s = targetAltitude - (ship.y+ship.halfHeight);
+  var control = -ship.vy*kv + (s*ks) 
+  //console.log(control);
+
+  if ( control<0) { 
+  	ship.vy = ship.vy - 0.11;
+  	
+  	g.createParticles( //The `createParticles` method
+    //ship.x+(ship.width/2), ship.y+ship.height, 
+    (ship.width/2), ship.height,
+    function () {
+      return g.sprite("images/star.png");
+    }, 
+    ship,       //The container to add the particles to
+    5,               //Number of particles
+    0.1,              //Gravity
+    true,             //Random spacing
+    1,2); 
+
+  } else {
+  	// particleStream.stop();
+  }
+
+  /////////////////////////////////////////////////////
 
   //Apply gravity to the vertical velocity
   ship.vy += ship.gravity;
@@ -333,7 +369,7 @@ function reset() {
 
   //Reset the game if the fairy hits a block
   ship.visible = true;
-  ship.y = 0;
+  ship.y = 100;
   ship.vy = 0;
   ship.x = 0;
   ship.vx = VX;
