@@ -3,6 +3,7 @@
 const GRAVITY = 0.05;
 const VX = 1.25 ;
 
+let autoPilot = flase;
 
 /*
 Learn how to make a ship bounce around the canvas
@@ -216,32 +217,35 @@ function play() {
   /////////////////////////////////////////////////////
   // Auto pilot 
   /////////////////////////////////////////////////////
-  var kv = 25;
-  var ks = 1;
+  
+  if (autoPilot) {
 
-  var s = targetAltitude - (ship.y+ship.halfHeight);
-  var control = -ship.vy*kv + (s*ks) 
-  //console.log(control);
+    var kv = 25;
+    var ks = 1;
 
-  if ( control<0) { 
-  	ship.vy = ship.vy - 0.11;
-  	
-  	g.createParticles( //The `createParticles` method
-    //ship.x+(ship.width/2), ship.y+ship.height, 
-    (ship.width/2), ship.height,
-    function () {
-      return g.sprite("images/star.png");
-    }, 
-    ship,       //The container to add the particles to
-    5,               //Number of particles
-    0.1,              //Gravity
-    true,             //Random spacing
-    1,2); 
+    var s = targetAltitude - (ship.y+ship.halfHeight);
+    var control = -ship.vy*kv + (s*ks) 
+    //console.log(control);
 
-  } else {
-  	// particleStream.stop();
+    if ( control<0) { 
+      ship.vy = ship.vy - 0.11;
+
+      g.createParticles( //The `createParticles` method
+      //ship.x+(ship.width/2), ship.y+ship.height, 
+      (ship.width/2), ship.height,
+      function () {
+        return g.sprite("images/star.png");
+      }, 
+      ship,       //The container to add the particles to
+      5,               //Number of particles
+      0.1,              //Gravity
+      true,             //Random spacing
+      1,2); 
+
+    } else {
+      // particleStream.stop();
+    }
   }
-
   /////////////////////////////////////////////////////
 
   //Apply gravity to the vertical velocity
