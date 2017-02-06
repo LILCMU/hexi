@@ -3,7 +3,7 @@
 const GRAVITY = 0.05;
 const VX = 1.25 ;
 
-let autoPilot = flase;
+let autoPilot = false;
 
 /*
 Learn how to make a ship bounce around the canvas
