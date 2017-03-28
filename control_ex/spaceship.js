@@ -29,12 +29,11 @@ var prevVy = undefined;
 var message = undefined;
 var particleStream = undefined;
 
+var ws = undefined;
+var remoteCMD = "off";
+
 let pauseDone = false;
-
-var ws=undefined;
-
-let rocketOn = false;
-
+let sendSync = false;
 //If you 're not loading any files, start Hexi after
 //you've decalred your global variables
 g.start();
@@ -42,9 +41,6 @@ g.start();
 //The `setup` function to initialize your application
 function setup() {
 
-
-	
-  connectWebSocket();
 
 
   // ======================================
@@ -110,6 +106,35 @@ function setup() {
   message.visible = false;
 
 
+  ///////////////////////////////////////////////
+  //  Web Socket Connection
+  ///////////////////////////////////////////////
+  
+  ws = new WebSocket("ws://localhost:8989/ws");
+
+   ws.onopen = function()
+   {
+   	ws.send("open COM5 115200 tinyg");
+      // Web Socket is connected, send data using send()
+
+   };
+	
+   ws.onmessage = function (evt) 
+   { 
+      var received_msg = evt.data;
+      console.log("Received: " + received_msg);
+      
+      try {
+    	  var obj = JSON.parse(received_msg);
+	      if (obj.hasOwnProperty('D')) {
+	      	remoteCMD = obj.D.trim();
+	      	console.log ("remoteCMD = " + remoteCMD)
+	      }
+	  } catch (e)  {}
+	  
+   };
+
+
 
 
   //When the pointer is tapped, center the ship
@@ -130,15 +155,15 @@ function setup() {
 
   g.pointer.press = function () {
       // play rocket gas animation
-      rocketOn = true;
-//      return particleStream.play();
+      return particleStream.play();
 
   }
 
   //Stop creating particles when the pointer is released
   g.pointer.release = function () {
-  	rocketOn  = false;
-//    return particleStream.stop();
+    sendSync = false;
+    return particleStream.stop();
+    
   };
 
   //Change the game state to `play`.
@@ -166,6 +191,7 @@ function setup() {
 
 
 
+
   
 
 
@@ -173,6 +199,25 @@ function setup() {
 
 
 }
+
+function fireRocket() {
+  	ship.vy = ship.vy - 0.11;
+  	
+  	g.createParticles( //The `createParticles` method
+    //ship.x+(ship.width/2), ship.y+ship.height, 
+    (ship.width/2), ship.height,
+    function () {
+      return g.sprite("images/star.png");
+    }, 
+    ship,       //The container to add the particles to
+    5,               //Number of particles
+    0.1,              //Gravity
+    true,             //Random spacing
+    1,2);
+
+}
+
+
 
 
 function shipExplode() {
@@ -216,26 +261,43 @@ function play() {
 
 
 
-  // if (g.pointer.isDown) {
-  // 	  rocketOn = true
-  // 	  //ship.vy = ship.vy - 0.1 ; 
-  // }
-
-
-  if (rocketOn == true) {
+  if (g.pointer.isDown) {
   	  ship.vy = ship.vy - 0.1 ; 
-      particleStream.play();
- 
-  } else {
-  	   particleStream.stop();
- 
+
+	  /////////////////////////////////////////////////////
+	  // Send data 
+	  /////////////////////////////////////////////////////
+	  var kv = 25;
+	  var ks = 1;
+
+	  var s = targetAltitude - (ship.y+ship.halfHeight);
+	  var v = ship.vy;
+
+	  if (!sendSync) {
+	 //  	ws.send("sendjson " + JSON.stringify({
+		//   P: "COM5",
+		//   Data: [{"D":"s=" + s.toFixed(2) + "\r"}]
+		// }));
+
+		ws.send("send COM5 A=" + s.toFixed(2));
+		ws.send("send COM5 B=" + v.toFixed(2));
+
+
+		sendSync = true;
+	  }
 
   }
 
 
-  /////////////////////////////////////////////////////
-  // Auto pilot 
-  /////////////////////////////////////////////////////
+
+  if (remoteCMD == "on") {
+  	fireRocket();
+  } 
+
+
+  // /////////////////////////////////////////////////////
+  // // Auto pilot 
+  // /////////////////////////////////////////////////////
   // var kv = 25;
   // var ks = 1;
 
@@ -415,39 +477,4 @@ function reset() {
 function doPause() {
 
   pauseDone = true;
-}
-
-
-function connectWebSocket() {
-
-	ws = new WebSocket("ws://localhost:8989/ws");
-
-   ws.onopen = function()
-   {
-		ws.send("open COM4 115200 default\n");
-   };
-
-   ws.onmessage = function (evt) 
-   { 	
-      var received_msg = evt.data;
-      var json = JSON.parse(evt.data);
-      //var json = JSON.parse('{"P":"COM4","D":"0"}');
-
-
-
-      if (json.D == "1") {
-      	rocketOn = true;
-      	console.log("ON")
-      }
-
-      if (json.D == "0") {
-      	rocketOn = false;
-      	console.log("OFF")
-      }
-
-      
-
-   };	
-
-
 }
