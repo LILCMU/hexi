@@ -31,6 +31,10 @@ var particleStream = undefined;
 
 let pauseDone = false;
 
+var ws=undefined;
+
+let rocketOn = false;
+
 //If you 're not loading any files, start Hexi after
 //you've decalred your global variables
 g.start();
@@ -38,6 +42,9 @@ g.start();
 //The `setup` function to initialize your application
 function setup() {
 
+
+	
+  connectWebSocket();
 
 
   // ======================================
@@ -123,13 +130,15 @@ function setup() {
 
   g.pointer.press = function () {
       // play rocket gas animation
-      return particleStream.play();
+      rocketOn = true;
+//      return particleStream.play();
 
   }
 
   //Stop creating particles when the pointer is released
   g.pointer.release = function () {
-    return particleStream.stop();
+  	rocketOn  = false;
+//    return particleStream.stop();
   };
 
   //Change the game state to `play`.
@@ -151,7 +160,6 @@ function setup() {
     true,             //Random spacing
     1,2);             //Min/max angle
   });
-
 
 
 
@@ -208,39 +216,51 @@ function play() {
 
 
 
-  if (g.pointer.isDown) {
+  // if (g.pointer.isDown) {
+  // 	  rocketOn = true
+  // 	  //ship.vy = ship.vy - 0.1 ; 
+  // }
+
+
+  if (rocketOn == true) {
   	  ship.vy = ship.vy - 0.1 ; 
+      particleStream.play();
+ 
+  } else {
+  	   particleStream.stop();
+ 
+
   }
 
 
   /////////////////////////////////////////////////////
   // Auto pilot 
   /////////////////////////////////////////////////////
-  var kv = 25;
-  var ks = 1;
+  // var kv = 25;
+  // var ks = 1;
 
-  var s = targetAltitude - (ship.y+ship.halfHeight);
-  var control = -ship.vy*kv + (s*ks) 
-  //console.log(control);
+  // var s = targetAltitude - (ship.y+ship.halfHeight);
+  // var control = -ship.vy*kv + (s*ks) 
+  // //console.log(control);
 
-  if ( control<0) { 
-  	ship.vy = ship.vy - 0.11;
+  // if ( control<0) { 
+  // 	ship.vy = ship.vy - 0.11;
   	
-  	g.createParticles( //The `createParticles` method
-    //ship.x+(ship.width/2), ship.y+ship.height, 
-    (ship.width/2), ship.height,
-    function () {
-      return g.sprite("images/star.png");
-    }, 
-    ship,       //The container to add the particles to
-    5,               //Number of particles
-    0.1,              //Gravity
-    true,             //Random spacing
-    1,2); 
+  // 	g.createParticles( //The `createParticles` method
+  //   //ship.x+(ship.width/2), ship.y+ship.height, 
+  //   (ship.width/2), ship.height,
+  //   function () {
+  //     return g.sprite("images/star.png");
+  //   }, 
+  //   ship,       //The container to add the particles to
+  //   5,               //Number of particles
+  //   0.1,              //Gravity
+  //   true,             //Random spacing
+  //   1,2); 
 
-  } else {
-  	// particleStream.stop();
-  }
+  // } else {
+  // 	// particleStream.stop();
+  // }
 
   /////////////////////////////////////////////////////
 
@@ -395,4 +415,39 @@ function reset() {
 function doPause() {
 
   pauseDone = true;
+}
+
+
+function connectWebSocket() {
+
+	ws = new WebSocket("ws://localhost:8989/ws");
+
+   ws.onopen = function()
+   {
+		ws.send("open COM4 115200 default\n");
+   };
+
+   ws.onmessage = function (evt) 
+   { 	
+      var received_msg = evt.data;
+      var json = JSON.parse(evt.data);
+      //var json = JSON.parse('{"P":"COM4","D":"0"}');
+
+
+
+      if (json.D == "1") {
+      	rocketOn = true;
+      	console.log("ON")
+      }
+
+      if (json.D == "0") {
+      	rocketOn = false;
+      	console.log("OFF")
+      }
+
+      
+
+   };	
+
+
 }
